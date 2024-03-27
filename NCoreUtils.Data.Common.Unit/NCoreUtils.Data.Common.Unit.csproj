@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+
+    <VSTestResultsDirectory>$([System.IO.Path]::Combine($(MSBuildProjectDirectory), "results"))</VSTestResultsDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="ReportGenerator" Version="5.2.4" />
+    <PackageReference Include="xunit" Version="2.5.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NCoreUtils.Data.Common\NCoreUtils.Data.Common.csproj" />
+  </ItemGroup>
+
+  <!-- UNIT/COVERAGE -->
+  <Target Name="BeforeRunCoverageTests">
+    <PropertyGroup>
+      <CollectCoverage>true</CollectCoverage>
+      <CoverletOutputFormat>opencover</CoverletOutputFormat>
+      <CoverletOutput>$([System.IO.Path]::Combine($(MSBuildProjectDirectory), "coverage.opencover.xml"))</CoverletOutput>
+      <Threshold>0</Threshold>
+      <ThresholdType>line</ThresholdType>
+      <ThresholdStat>total</ThresholdStat>
+
+      <VSTestSetting>$([System.IO.Path]::Combine($(MSBuildProjectDirectory), "coverlet.runsettings"))</VSTestSetting>
+      <VSTestCollect>XPlat Code Coverage</VSTestCollect>
+    </PropertyGroup>
+    <RemoveDir Directories="$(VSTestResultsDirectory)" />
+  </Target>
+  <Target Name="GenerateReport">
+    <ItemGroup>
+      <UnitTestResults Include="$(VSTestResultsDirectory)\**\coverage*.xml" />
+    </ItemGroup>
+    <ReportGenerator ReportFiles="@(UnitTestResults)" TargetDirectory="report" ReportTypes="Html" VerbosityLevel="Verbose" />
+  </Target>
+  <Target Name="RunCoverageTests" DependsOnTargets="BeforeRunCoverageTests">
+    <CallTarget Targets="VSTest" />
+    <MSBuild Projects="$(MSBuildProjectFile)" Targets="GenerateReport" Properties="TargetFramework=$(TargetFramework);CoverletOutput=$(CoverletOutput)" />
+  </Target>
+
+</Project>
